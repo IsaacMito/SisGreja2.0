@@ -3,6 +3,7 @@ package com.isaac.sisgreja.ui;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,7 +53,12 @@ public class UiPrincipal {
 		mntmFiel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				new UiCadastroFiel(form).setVisible(true);
+				try {
+					new UiCadastroFiel(form).setVisible(true);
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 		mnCadastro.add(mntmFiel);
@@ -61,7 +67,7 @@ public class UiPrincipal {
 		mntmPastor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				new UiCadastroPastor(form).setVisible(true);
+			
 			}
 		});
 		mnCadastro.add(mntmPastor);

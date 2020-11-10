@@ -7,7 +7,11 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -21,7 +25,7 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
 import com.isaac.sisgreja.domain.Fiel;
-import com.isaac.sisgreja.persist.BancoDados;
+import com.isaac.sisgreja.persist.FieisDao;
 import com.isaac.sisgreja.ui.componentes.VerticalFlowLayout;
 import com.isaac.sisgreja.util.Constantes;
 import com.isaac.sisgreja.util.Funcoes;
@@ -29,7 +33,9 @@ import com.isaac.sisgreja.util.Funcoes;
 public class UiCadastroFiel {
 
 	private Fiel fiel;
-
+	private FieisDao fieisDao;
+	private List<Fiel> fieis;
+	
 	private boolean novo;
 
 	private JDialog form;
@@ -51,39 +57,31 @@ public class UiCadastroFiel {
 
 	/**
 	 * Create the dialog. tyeste
+	 * @throws SQLException 
 	 */
-	public UiCadastroFiel(JFrame uiPai) {
+	public UiCadastroFiel(JFrame uiPai) throws SQLException {
 
 		initialize(uiPai);
 		habilitaNavegadores();
 		habilitaControles(true);
-
-		if (BancoDados.fieis.isEmpty()) {
-
-		} else {
-
-			textCpf.setText(Integer.toString(BancoDados.fieis.get(0).getCpf()));
-			textNome.setText(BancoDados.fieis.get(0).getNome());
-			textData.setText(Funcoes.dateToString(BancoDados.fieis.get(0).getDataNacimento()));
-			textDizimo.setText(BancoDados.fieis.get(0).getDisimo() + "");
-		}
+		carregaFieis();
 
 		btnPrimeiro.doClick();
 	}
 
+	private void carregaFieis() throws SQLException {
+	
+		fieis = fieisDao.getListar();
+	}
+
 	private void habilitaNavegadores() {
 
-		if (BancoDados.fieis.isEmpty()) {
-			btnPrimeiro.setEnabled(false);
-			btnAnterio.setEnabled(false);
-			btnSeguinte.setEnabled(false);
-			btnUltimo.setEnabled(false);
-		} else {
+		
 			btnPrimeiro.setEnabled(true);
 			btnAnterio.setEnabled(true);
 			btnSeguinte.setEnabled(true);
 			btnUltimo.setEnabled(true);
-		}
+		
 	}
 
 	private void habilitaControles(boolean status) {
@@ -120,16 +118,12 @@ public class UiCadastroFiel {
 		btnPrimeiro.setEnabled(false);
 		btnPrimeiro.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
-				if (BancoDados.fieis.isEmpty()) {
-
-				} else {
-
-					textCpf.setText(Integer.toString(BancoDados.fieis.get(0).getCpf()));
-					textNome.setText(BancoDados.fieis.get(0).getNome());
-					textData.setText(Funcoes.dateToString(BancoDados.fieis.get(0).getDataNacimento()));
-					textDizimo.setText(Double.toString(BancoDados.fieis.get(0).getDisimo()));
-				}
+				
+				textCpf.setText(Integer.toString(fieis.get(0).getCpf()));
+				textNome.setText(fieis.get(0).getNome());
+				textData.setText(Funcoes.dateToString(fieis.get(0).getDataNacimento()));
+				textDizimo.setText(Double.toString(fieis.get(0).getDisimo()));
+				
 			}
 		});
 		pnlNavegador.add(btnPrimeiro);
@@ -137,24 +131,8 @@ public class UiCadastroFiel {
 		btnAnterio = new JButton("<");
 		btnAnterio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
-				try {
-
-					for (int i = 0; i < BancoDados.fieis.size(); i++) {
-
-						if (BancoDados.fieis.get(i).getCpf() == Integer.parseInt(textCpf.getText())) {
-
-							textCpf.setText(Integer.toString(BancoDados.fieis.get(i - 1).getCpf()));
-							textNome.setText(BancoDados.fieis.get(i - 1).getNome());
-							textData.setText(Funcoes.dateToString(BancoDados.fieis.get(i - 1).getDataNacimento()));
-							textDizimo.setText(Double.toString(BancoDados.fieis.get(i - 1).getDisimo()));
-
-							return;
-						}
-					}
-				} catch (java.lang.IndexOutOfBoundsException w) {
-
-				}
+				
+				
 
 			}
 		});
@@ -165,22 +143,6 @@ public class UiCadastroFiel {
 		btnSeguinte.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				try {
-					for (int i = 0; i < BancoDados.fieis.size(); i++) {
-
-						if (BancoDados.fieis.get(i).getCpf() == Integer.parseInt(textCpf.getText())) {
-
-							textCpf.setText(Integer.toString(BancoDados.fieis.get(i + 1).getCpf()));
-							textNome.setText(BancoDados.fieis.get(i + 1).getNome());
-							textData.setText(Funcoes.dateToString(BancoDados.fieis.get(i + 1).getDataNacimento()));
-							textDizimo.setText(Double.toString(BancoDados.fieis.get(i + 1).getDisimo()));
-
-							return;
-						}
-					}
-				} catch (java.lang.IndexOutOfBoundsException w) {
-
-				}
 
 			}
 		});
@@ -191,16 +153,7 @@ public class UiCadastroFiel {
 		btnUltimo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				if (BancoDados.fieis.isEmpty()) {
 
-				} else {
-
-					textCpf.setText(Integer.toString(BancoDados.fieis.get(BancoDados.fieis.size() - 1).getCpf()));
-					textNome.setText(BancoDados.fieis.get(BancoDados.fieis.size() - 1).getNome());
-					textData.setText(
-							Funcoes.dateToString(BancoDados.fieis.get(BancoDados.fieis.size() - 1).getDataNacimento()));
-					textDizimo.setText(Double.toString(BancoDados.fieis.get(BancoDados.fieis.size() - 1).getDisimo()));
-				}
 
 			}
 		});
@@ -315,22 +268,20 @@ public class UiCadastroFiel {
 		btnApagar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				for (int i = 0; i < BancoDados.fieis.size(); i++) {
+				fiel = new Fiel();
+				
+				fiel.setCpf(Integer.parseInt(textCpf.getText()));
+				fiel.setNome(textNome.getText());
+				fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
 
-					if (BancoDados.fieis.get(i).getCpf() == Integer.parseInt(textCpf.getText())) {
-
-						BancoDados.fieis.remove(BancoDados.fieis.get(i));
-
-						JOptionPane.showMessageDialog(form, "deletado com sucesso!");
-						
-						textCpf.setText(Integer.toString(BancoDados.fieis.get(i).getCpf()));
-						textNome.setText(BancoDados.fieis.get(i).getNome());
-						textData.setText(Funcoes.dateToString(BancoDados.fieis.get(i).getDataNacimento()));
-						textDizimo.setText(Double.toString(BancoDados.fieis.get(i).getDisimo()));
-						
-						return;
-					}
+				try {
+					fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
+				} catch (ParseException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
+				
+				fieisDao.remove(fiel);
 			}
 		});
 
@@ -358,49 +309,40 @@ public class UiCadastroFiel {
 
 				if (novo) {
 
-					for (int i = 0; i < BancoDados.fieis.size(); i++) {
-
-						if (BancoDados.fieis.get(i).getCpf() == Integer.parseInt(textCpf.getText())) {
-
-							JOptionPane.showMessageDialog(form, "Conta já registrada");
-							return;
-						}
-					}
 					fiel = new Fiel();
 
 					fiel.setCpf(Integer.parseInt(textCpf.getText()));
 					fiel.setNome(textNome.getText());
 					fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
 
-					BancoDados.fieis.add(fiel);
+					try {
+						fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
+					} catch (ParseException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					try {
+						fieisDao.adiciona(fiel);
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 
 					JOptionPane.showMessageDialog(form, "Cadastrado com sucesso");
 					habilitaControles(true);
 					habilitaNavegadores();
+					
 
-					try {
-						fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-					} catch (ParseException ignore) {
-					}
 
 				} else {
-
-					for (int i = 0; i < BancoDados.fieis.size(); i++) {
-
-						if (BancoDados.fieis.get(i).getCpf() == Integer.parseInt(textCpf.getText())) {
-
-							BancoDados.fieis.get(i).setNome(textNome.getText());
-							try {
-								BancoDados.fieis.get(i).setDataNacimento(Funcoes.stringToDate(textData.getText()));
-							} catch (ParseException ignore) {
-							}
-							BancoDados.fieis.get(i).setDisimo(Double.parseDouble(textDizimo.getText()));
-
-							JOptionPane.showMessageDialog(form, "Salvo com sucesso");
-							habilitaControles(true);
-							habilitaNavegadores();
-						}
-					}
+					
+					fiel = new Fiel();
+					
+					fiel.setCpf(Integer.parseInt(textCpf.getText()));
+					fiel.setNome(textNome.getText());
+					fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
+					
+					fieisDao.altera(fiel);
 				}
 			}
 
