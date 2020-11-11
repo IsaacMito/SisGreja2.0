@@ -6,10 +6,12 @@ import java.sql.SQLException;
 
 public class ConnectionFactory {
 	
-	public static Connection getConnection() {
+	public Connection getConnection() {
 		try {
-			return DriverManager.getConnection("jdbc:mysql://localhost/SisGreja?useTimezone=true&serverTimezone=UTC", "root", "123456");
+			Connection con =  DriverManager.getConnection("jdbc:mysql://localhost/sisgreja2.0?useTimezone=true&serverTimezone=UTC", "root", "123456");
+			return con;
 		} catch (SQLException e) {
+			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}

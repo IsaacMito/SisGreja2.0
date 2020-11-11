@@ -67,7 +67,12 @@ public class UiPrincipal {
 		mntmPastor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-			
+				try {
+					new UiCadastroPastor(form).setVisible(true);
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 		mnCadastro.add(mntmPastor);

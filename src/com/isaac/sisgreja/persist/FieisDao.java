@@ -8,40 +8,57 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+
 import com.isaac.sisgreja.domain.Fiel;
 import com.isaac.sisgreja.jdbc.ConnectionFactory;
+import com.isaac.sisgreja.ui.UiCadastroFiel;
 
 public class FieisDao {
 
-	private Connection con;
+	private Connection con = null;
 
 	public FieisDao() throws SQLException {
-		this.con = ConnectionFactory.getConnection();
+		con = new ConnectionFactory().getConnection();
+	}
+	
+	public void FieisDaoConecta() throws SQLException {
+		con = new ConnectionFactory().getConnection();
 	}
 
-	public void adiciona(Fiel fiel) throws SQLException {
+	public void adiciona(Fiel fiel, JDialog form) throws SQLException {
+		try {
+			String sql = "insert into fiel " + "(cpf,nome,data_nascimento, dizimo)" + " values (?,?,?,?)";
+			PreparedStatement stmt = con.prepareStatement(sql);
 
-		String sql = "insert into fieis " + "(cpf,nome,dataNascimento, dizimo)" + " values (?,?,?,?)";
-		PreparedStatement stmt = con.prepareStatement(sql);
+			stmt.setInt(1, fiel.getCpf());
+			
+			stmt.setString(2, fiel.getNome());
+			
+			stmt.setDate(3, new Date(fiel.getDataNacimento().getTime()));
+			
+			stmt.setDouble(4, fiel.getDisimo());
 
-		// prepared statement para inserção
+			stmt.execute();
+			stmt.close();
+			
+			JOptionPane.showMessageDialog(form, "Cadastrado efetuado com sucesso");
+			
+		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
+		JOptionPane.showMessageDialog(form, "Conta ja exitente");
+		} catch (Exception e) {
+			
+		}
 
-		// seta os valores
-		stmt.setInt(1, fiel.getCpf());
-		stmt.setString(2, fiel.getNome());
-		stmt.setDouble(3, fiel.getDisimo());
-
-		stmt.setDate(4, (Date) fiel.getDataNacimento());
-		// executa
-		stmt.execute();
-		stmt.close();
+		
 	}
 
 	public List<Fiel> getListar() throws SQLException {
 
 		List<Fiel> fieis = new ArrayList<Fiel>();
 
-		PreparedStatement stmt = this.con.prepareStatement("select * from fiel");
+		PreparedStatement stmt = con.prepareStatement("select * from fiel");
 		ResultSet rs = stmt.executeQuery();
 
 		while (rs.next()) {
@@ -63,13 +80,13 @@ public class FieisDao {
 
 	public void altera(Fiel fiel) {
 
-		String sql = "update contatos set nome=?, dataNascimento=?," + "dizimo=? where cpf=?";
+		String sql = "update fiel set nome=?, data_nascimento=?," + "dizimo=? where cpf=?";
 		try {
 			PreparedStatement stmt = con.prepareStatement(sql);
 			stmt.setInt(4, fiel.getCpf());
 
 			stmt.setString(1, fiel.getNome());
-			stmt.setDate(2, (Date) fiel.getDataNacimento());
+			stmt.setDate(2, new Date(fiel.getDataNacimento().getTime()));
 			stmt.setDouble(3, fiel.getDisimo());
 
 			stmt.execute();
@@ -83,7 +100,7 @@ public class FieisDao {
 	public void remove(Fiel fiel) {
 
 		try {
-			PreparedStatement stmt = con.prepareStatement("delete " + "from contatos where cpf=?");
+			PreparedStatement stmt = con.prepareStatement("delete " + "from fiel where cpf=?");
 			stmt.setLong(1, fiel.getCpf());
 
 			stmt.execute();
@@ -92,4 +109,5 @@ public class FieisDao {
 			throw new RuntimeException(e);
 		}
 	}
+
 }

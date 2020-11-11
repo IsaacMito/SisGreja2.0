@@ -10,7 +10,7 @@ public class Funcoes {
 	
 	public static Date stringToDate(String s) throws ParseException {
 		
-		return format.parse(s);
+		return   format.parse(s);
 	}
 	
 	public static String dateToString(Date data) {
