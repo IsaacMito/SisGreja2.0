@@ -31,7 +31,6 @@ public class UiPrincipal {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-
 		form = new JFrame();
 		form.setTitle(Constantes.NOME_SISTEMA);
 		form.setBounds(100, 100, 643, 410);

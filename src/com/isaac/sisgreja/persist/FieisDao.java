@@ -22,36 +22,27 @@ public class FieisDao {
 	public FieisDao() throws SQLException {
 		con = new ConnectionFactory().getConnection();
 	}
-	
+
 	public void FieisDaoConecta() throws SQLException {
 		con = new ConnectionFactory().getConnection();
 	}
 
-	public void adiciona(Fiel fiel, JDialog form) throws SQLException {
-		try {
-			String sql = "insert into fiel " + "(cpf,nome,data_nascimento, dizimo)" + " values (?,?,?,?)";
-			PreparedStatement stmt = con.prepareStatement(sql);
-
-			stmt.setInt(1, fiel.getCpf());
-			
-			stmt.setString(2, fiel.getNome());
-			
-			stmt.setDate(3, new Date(fiel.getDataNacimento().getTime()));
-			
-			stmt.setDouble(4, fiel.getDisimo());
-
-			stmt.execute();
-			stmt.close();
-			
-			JOptionPane.showMessageDialog(form, "Cadastrado efetuado com sucesso");
-			
-		} catch (java.sql.SQLIntegrityConstraintViolationException e) {
-		JOptionPane.showMessageDialog(form, "Conta ja exitente");
-		} catch (Exception e) {
-			
-		}
-
+	public void adiciona(Fiel fiel) throws SQLException {
 		
+		String sql = "insert into fiel " + "(cpf,nome,data_nascimento, dizimo)" + " values (?,?,?,?)";
+		PreparedStatement stmt = con.prepareStatement(sql);
+
+		stmt.setInt(1, fiel.getCpf());
+
+		stmt.setString(2, fiel.getNome());
+
+		stmt.setDate(3, new Date(fiel.getDataNacimento().getTime()));
+
+		stmt.setDouble(4, fiel.getDisimo());
+
+		stmt.execute();
+		stmt.close();
+
 	}
 
 	public List<Fiel> getListar() throws SQLException {

@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
@@ -52,6 +51,7 @@ public class UiCadastroFiel {
 	private JButton btnApagar;
 	private JButton btnFechar;
 	private JTextField textDizimo;
+	private JButton btnSeguinte;
 
 	/**
 	 * Create the dialog. tyeste
@@ -60,12 +60,31 @@ public class UiCadastroFiel {
 	 */
 	public UiCadastroFiel(JFrame uiPai) throws SQLException {
 
-		initialize(uiPai);
-		habilitaNavegadores();
-		habilitaControles(true);
-		carregaFieis();
 
-		btnPrimeiro.doClick();
+		try {
+			initialize(uiPai);
+			if (fieisDao == null) {
+				habilitaNavegadores(false);
+				carregaFieis();
+			} else {	
+				habilitaNavegadores(true);
+			}
+
+			fiel = fieis.get(0);
+			prencheUi();
+			
+
+			habilitaText(false);
+			habilitaControles(true);
+
+		} catch (java.lang.IndexOutOfBoundsException e) {
+
+			textCpf.setEditable(true);
+			habilitaText(true);
+			habilitaControles(false);
+			novo = true;
+		}
+
 	}
 
 	private void carregaFieis() throws SQLException {
@@ -76,11 +95,12 @@ public class UiCadastroFiel {
 		fieis = fieisDao.getListar();
 	}
 
-	private void habilitaNavegadores() {
+	private void habilitaNavegadores(boolean status) {
 
-		btnPrimeiro.setEnabled(true);
-		btnAnterio.setEnabled(true);
-		btnUltimo.setEnabled(true);
+		btnSeguinte.setEnabled(status);
+		btnPrimeiro.setEnabled(status);
+		btnAnterio.setEnabled(status);
+		btnUltimo.setEnabled(status);
 
 	}
 
@@ -110,10 +130,19 @@ public class UiCadastroFiel {
 	}
 
 	private void prencheUi() {
+
 		textCpf.setText(Integer.toString(fiel.getCpf()));
 		textNome.setText(fiel.getNome());
 		textData.setText(Funcoes.dateToString(fiel.getDataNacimento()));
 		textDizimo.setText(Double.toString(fiel.getDisimo()));
+	}
+
+	private void prencheFiel() throws ParseException {
+
+		fiel.setCpf(Integer.parseInt(textCpf.getText()));
+		fiel.setNome(textNome.getText());
+		fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
+		fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
 	}
 
 	private void initialize(JFrame uiPai) {
@@ -134,8 +163,8 @@ public class UiCadastroFiel {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					fiel = fieis.get(0);
-
 					prencheUi();
+
 				} catch (IndexOutOfBoundsException ignore) {
 					// Faz nada
 				} catch (Exception e2) {
@@ -150,10 +179,12 @@ public class UiCadastroFiel {
 		btnAnterio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
+
 					int pos = fieis.indexOf(fiel);
 					fiel = fieis.get(pos - 1);
 
 					prencheUi();
+
 				} catch (IndexOutOfBoundsException ignore) {
 					// Faz nada
 				} catch (Exception e2) {
@@ -166,6 +197,7 @@ public class UiCadastroFiel {
 		pnlNavegador.add(btnAnterio);
 
 		btnUltimo = new JButton(">>");
+		btnUltimo.setEnabled(false);
 		btnUltimo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
@@ -183,7 +215,8 @@ public class UiCadastroFiel {
 			}
 		});
 
-		JButton btnSeguinte = new JButton(">");
+		btnSeguinte = new JButton(">");
+		btnSeguinte.setEnabled(false);
 		btnSeguinte.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -316,38 +349,32 @@ public class UiCadastroFiel {
 				try {
 
 					fiel = new Fiel();
-
-					fiel.setCpf(Integer.parseInt(textCpf.getText()));
-					fiel.setNome(textNome.getText());
-					fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
-
-					try {
-						fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-					} catch (ParseException e1) {
-
-						e1.printStackTrace();
-					}
+					prencheFiel();
 					JOptionPane.showMessageDialog(form, "Deletado");
+
 					fieisDao.remove(fiel);
-					try {
-						carregaFieis();
-					} catch (SQLException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
+					fieis.remove(fiel);
 
-					try {
-						fiel = fieis.get(0);
+					carregaFieis();
+					
+					fiel = fieis.get(0);
+					
+					prencheUi();
+					
 
-						prencheUi();
-					} catch (java.lang.IndexOutOfBoundsException e4) {
-						limpaTela();
-					} catch (Exception e2) {
-						e2.printStackTrace();
-						JOptionPane.showMessageDialog(form, e2.getMessage());
-					}
 				} catch (java.lang.NumberFormatException e2) {
 					JOptionPane.showMessageDialog(form, "Nem uma pessoa para deletar");
+
+				} catch (java.lang.IndexOutOfBoundsException e4) {
+
+					limpaTela();
+					habilitaControles(false);
+					textCpf.setEditable(true);
+					habilitaText(true);
+					novo = true;
+
+				} catch (SQLException e1) {
+					e1.printStackTrace();
 				} catch (Exception e2) {
 					e2.printStackTrace();
 				}
@@ -372,82 +399,76 @@ public class UiCadastroFiel {
 
 				try {
 					fiel = fieis.get(0);
-
 					prencheUi();
+					
+					textCpf.setEditable(false);
+					habilitaText(false);
+					habilitaControles(true);
+					
 				} catch (Exception e2) {
-					e2.printStackTrace();
-					JOptionPane.showMessageDialog(form, e2.getMessage());
+
 				}
 
-				textCpf.setEditable(false);
-				habilitaControles(true);
-				habilitaText(false);
 			}
 		});
 		btnSalvar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				if (novo) {
-					try {
+				try {
+
+					if (novo) {
+
 						fiel = new Fiel();
 
-						fiel.setCpf(Integer.parseInt(textCpf.getText()));
-						fiel.setNome(textNome.getText());
-						fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
+						prencheFiel();
 
-						try {
-							fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-						} catch (ParseException e1) {
-
-							e1.printStackTrace();
-						}
-
-						try {
-							fieisDao.adiciona(fiel, form);
-						} catch (SQLException e1) {
-
-							e1.printStackTrace();
-						}
-
+						fieisDao.adiciona(fiel);
+						JOptionPane.showMessageDialog(form, "Salvo com susesso");
 						habilitaControles(true);
-						habilitaNavegadores();
+
 						habilitaText(false);
 						textCpf.setEditable(false);
-
-						try {
-							carregaFieis();
-						} catch (SQLException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-
-					} catch (java.lang.NumberFormatException ew) {
-
-						JOptionPane.showMessageDialog(form, "Credenciais vasias ou incorretas");
-					}
-
-				} else {
-
-					fiel = new Fiel();
-
-					fiel.setCpf(Integer.parseInt(textCpf.getText()));
-					fiel.setNome(textNome.getText());
-					fiel.setDisimo(Double.parseDouble(textDizimo.getText()));
-					try {
-						fiel.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-					} catch (ParseException e1) {
-
-						e1.printStackTrace();
-					}
-					JOptionPane.showMessageDialog(form, "Alterado com sucesso");
-					habilitaControles(true);
-					fieisDao.altera(fiel);
-					try {
 						carregaFieis();
-					} catch (SQLException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+
+						if (fieis.size() == 0)
+							habilitaNavegadores(false);
+						else
+							habilitaNavegadores(true);
+
+						int pos = fieis.indexOf(fiel);
+						fiel = fieis.get(pos + 1);
+
+						prencheUi();
+
+					} else {
+
+						fiel = new Fiel();
+
+						prencheFiel();
+
+						fieisDao.altera(fiel);
+						JOptionPane.showMessageDialog(form, "Alterado com sucesso");
+
+						habilitaText(false);
+						textCpf.setEditable(false);
+						habilitaControles(true);
+
 					}
+
+				} catch (java.sql.SQLIntegrityConstraintViolationException p4) {
+					JOptionPane.showMessageDialog(form, "Conta já registrada");
+
+				} catch (java.lang.NumberFormatException ew) {
+
+					JOptionPane.showMessageDialog(form, "Credenciais vazias ou incorretas");
+
+				} catch (ParseException e1) {
+
+					JOptionPane.showMessageDialog(form, "Data incorreta");
+				} catch (SQLException e1) {
+
+					e1.printStackTrace();
+
 				}
 			}
 

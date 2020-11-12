@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
 import com.isaac.sisgreja.domain.Pastor;
+import com.isaac.sisgreja.persist.FieisDao;
 import com.isaac.sisgreja.persist.PastoresDao;
 import com.isaac.sisgreja.ui.componentes.VerticalFlowLayout;
 import com.isaac.sisgreja.util.Constantes;
@@ -51,6 +52,7 @@ public class UiCadastroPastor {
 	private JButton btnApagar;
 	private JButton btnFechar;
 	private JTextField textSalario;
+	private JButton btnSeguinte;
 
 	/**
 	 * Create the dialog. tyeste
@@ -60,14 +62,34 @@ public class UiCadastroPastor {
 	public UiCadastroPastor(JFrame uiPai) throws SQLException {
 
 		initialize(uiPai);
-		habilitaNavegadores();
-		habilitaControles(true);
-		carregaFieis();
+		carregaPastores();
 
-		btnPrimeiro.doClick();
+		try {
+			initialize(uiPai);
+			if (pastoresDao == null) {
+				habilitaNavegadores(false);
+				carregaPastores();
+			} else {	
+				habilitaNavegadores(true);
+			}
+
+			pastor = pastores.get(0);
+			prencheUi();
+		
+			habilitaText(false);
+			habilitaControles(true);
+
+		} catch (java.lang.IndexOutOfBoundsException e) {
+
+			textCpf.setEditable(true);
+			habilitaText(true);
+			habilitaControles(false);
+			novo = true;
+		}
+
 	}
 
-	private void carregaFieis() throws SQLException {
+	private void carregaPastores() throws SQLException {
 
 		if (pastoresDao == null) {
 			pastoresDao = new PastoresDao();
@@ -75,11 +97,12 @@ public class UiCadastroPastor {
 		pastores = pastoresDao.getListar();
 	}
 
-	private void habilitaNavegadores() {
+	private void habilitaNavegadores(boolean status) {
 
-		btnPrimeiro.setEnabled(true);
-		btnAnterio.setEnabled(true);
-		btnUltimo.setEnabled(true);
+		btnSeguinte.setEnabled(status);
+		btnPrimeiro.setEnabled(status);
+		btnAnterio.setEnabled(status);
+		btnUltimo.setEnabled(status);
 
 	}
 
@@ -109,10 +132,19 @@ public class UiCadastroPastor {
 	}
 
 	private void prencheUi() {
+
 		textCpf.setText(Integer.toString(pastor.getCpf()));
 		textNome.setText(pastor.getNome());
 		textData.setText(Funcoes.dateToString(pastor.getDataNacimento()));
 		textSalario.setText(Double.toString(pastor.getSalario()));
+	}
+
+	private void prencheFiel() throws ParseException {
+
+		pastor.setCpf(Integer.parseInt(textCpf.getText()));
+		pastor.setNome(textNome.getText());
+		pastor.setSalario(Double.parseDouble(textSalario.getText()));
+		pastor.setDataNacimento(Funcoes.stringToDate(textData.getText()));
 	}
 
 	private void initialize(JFrame uiPai) {
@@ -133,8 +165,8 @@ public class UiCadastroPastor {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					pastor = pastores.get(0);
-
 					prencheUi();
+
 				} catch (IndexOutOfBoundsException ignore) {
 					// Faz nada
 				} catch (Exception e2) {
@@ -165,6 +197,7 @@ public class UiCadastroPastor {
 		pnlNavegador.add(btnAnterio);
 
 		btnUltimo = new JButton(">>");
+		btnUltimo.setEnabled(false);
 		btnUltimo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
@@ -182,7 +215,8 @@ public class UiCadastroPastor {
 			}
 		});
 
-		JButton btnSeguinte = new JButton(">");
+		btnSeguinte = new JButton(">");
+		btnSeguinte.setEnabled(false);
 		btnSeguinte.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -316,38 +350,34 @@ public class UiCadastroPastor {
 
 					pastor = new Pastor();
 
-					pastor.setCpf(Integer.parseInt(textCpf.getText()));
-					pastor.setNome(textNome.getText());
-					pastor.setSalario(Double.parseDouble(textSalario.getText()));
+					carregaPastores();
 
-					try {
-						pastor.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-					} catch (ParseException e1) {
-
-						e1.printStackTrace();
-					}
 					JOptionPane.showMessageDialog(form, "Deletado");
 					pastoresDao.remove(pastor);
-					try {
-						carregaFieis();
-					} catch (SQLException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
 
-					try {
-						pastor = pastores.get(0);
-
-						prencheUi();
-					} catch (java.lang.IndexOutOfBoundsException e4) {
-						limpaTela();
-					} catch (Exception e2) {
-						e2.printStackTrace();
-						JOptionPane.showMessageDialog(form, e2.getMessage());
-					}
+					carregaPastores();
+					pastor = pastores.get(0);
+					prencheUi();
+					
+					if (pastores.size() == 0)
+						habilitaNavegadores(false);
+					else
+						habilitaNavegadores(true);
+					
 				} catch (java.lang.NumberFormatException e2) {
 					JOptionPane.showMessageDialog(form, "Nem uma pessoa para deletar");
-				} catch (Exception e2) {
+
+				} catch (java.lang.IndexOutOfBoundsException e4) {
+
+					limpaTela();
+					habilitaControles(false);
+					textCpf.setEditable(true);
+					habilitaText(true);
+					novo = true;
+
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}  catch (Exception e2) {
 					e2.printStackTrace();
 				}
 
@@ -371,83 +401,70 @@ public class UiCadastroPastor {
 
 				try {
 					pastor = pastores.get(0);
-
 					prencheUi();
 				} catch (Exception e2) {
-					e2.printStackTrace();
-					JOptionPane.showMessageDialog(form, e2.getMessage());
+
 				}
 
 				textCpf.setEditable(false);
-				habilitaControles(true);
 				habilitaText(false);
+				habilitaControles(true);
 			}
 		});
 		btnSalvar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-				if (novo) {
-					try {
+				try {
+
+					if (novo) {
+
 						pastor = new Pastor();
 
-						pastor.setCpf(Integer.parseInt(textCpf.getText()));
-						pastor.setNome(textNome.getText());
-						pastor.setSalario(Double.parseDouble(textSalario.getText()));
-						
-						try {
-							pastor.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-						} catch (ParseException e1) {
+						prencheFiel();
 
-							e1.printStackTrace();
-						}
-
-						try {
-							pastoresDao.adiciona(pastor);
-						} catch (SQLException e1) {
-
-							e1.printStackTrace();
-						}
+						pastoresDao.adiciona(pastor);
+						JOptionPane.showMessageDialog(form, "Salvo com susesso");
 
 						habilitaControles(true);
-						habilitaNavegadores();
 						habilitaText(false);
 						textCpf.setEditable(false);
 
-						try {
-							carregaFieis();
-						} catch (SQLException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
+						if (pastores.size() == 0)
+							habilitaNavegadores(false);
+						else
+							habilitaNavegadores(true);
+						
+						carregaPastores();
 
-					} catch (java.lang.NumberFormatException ew) {
+					} else {
 
-						JOptionPane.showMessageDialog(form, "Credenciais vasias ou incorretas");
+						pastor = new Pastor();
+
+						prencheFiel();
+
+						pastoresDao.altera(pastor);
+						JOptionPane.showMessageDialog(form, "Alterado com sucesso");
+
+						habilitaText(false);
+						textCpf.setEditable(false);
+						habilitaControles(true);
+
 					}
 
-				} else {
+				} catch (java.sql.SQLIntegrityConstraintViolationException p4) {
+					JOptionPane.showMessageDialog(form, "Conta já registrada");
 
-					pastor = new Pastor();
+				} catch (java.lang.NumberFormatException ew) {
 
-					pastor.setCpf(Integer.parseInt(textCpf.getText()));
-					pastor.setNome(textNome.getText());
-					pastor.setSalario(Double.parseDouble(textSalario.getText()));
-					
-					try {
-						pastor.setDataNacimento(Funcoes.stringToDate(textData.getText()));
-					} catch (ParseException e1) {
+					JOptionPane.showMessageDialog(form, "Credenciais vazias ou incorretas");
 
-						e1.printStackTrace();
-					}
-					JOptionPane.showMessageDialog(form, "Alterado com sucesso");
-					habilitaControles(true);
-					pastoresDao.altera(pastor);
-					try {
-						carregaFieis();
-					} catch (SQLException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
+				} catch (ParseException e1) {
+
+					JOptionPane.showMessageDialog(form, "Data incorreta");
+				} catch (SQLException e1) {
+
+					e1.printStackTrace();
+
 				}
 			}
 
